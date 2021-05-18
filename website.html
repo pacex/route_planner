@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"></meta>
+        <title>Webbasierter Routenplaner LK PW HNT</title>
+        <!--import of leaflet--> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+        <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+        <style>
+            #mapid{
+                position: relative; 
+                left: 50%;
+                transform: translateX(-50%);
+                top:50px;
+                
+            }
+        </style>    
+    </head>
+
+    <body>
+        <!--Anfrageformulare-->
+        <p><b>Start- und Zielanfrage</b> </p>
+        <p>Bitte Start- und Zielknoten eingeben: </p>
+
+        <form method = "GET" id = "myForm" class = "ajax">
+            <input type="number" id="start" name="start" min="0" max="25115476" step="1" value="0"></input>
+            <input type="number" id="destination" name="destination" min="0" max="25115476" step="1" value="0"></input>
+            <input type = "submit" value="Send"></input>
+
+        </form>
+        <p>Die Distanz zwischen den beiden Knoten ist: </p>
+        <div id="display"></div> <!--- hier werden Antworten angezeigt --->
+        <div id="mapid" style="width: 600px; height: 400px;"></div> <!--- hier wird die karte angezeigt --->
+
+        <p><b>Naechster-Knoten-Suche</b> </p>
+        <p>Bitte Breiten- und Laengengrad eingeben: </p>
+        <form method = "GET" id = "myForm2" class = "ajax2">
+            <input type="number" id="latitude" name="latitude" min="46" max="55" step="any" value="46"></input>
+            <input type="number" id="longitude" name="longitude" min="5" max="17" step="any" value="5"></input>
+            <input type = "submit" value="Send"></input>
+        <p>Der naechste Knoten ist: </p>
+        <div id="displayNeighbour"></div>
+        <p>Er hat die Koordinaten: </p>
+        <div id="displayLatitude"></div>
+        <div id="displayLongitude"></div>
+
+        <div id="mapid" style="width: 600px; height: 400px;"></div> <!--- hier wird die karte angezeigt --->
+        
+        <!--Client Anfrage JQuery Skript-->
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+        <script>
+
+        
+            var mymap = L.map('mapid').setView([51.165691, 10.451526], 6);
+			
+			//Path and markers
+			var feature = {
+				"type": "LineString",
+				"coordinates": []
+			};
+			var gjLayer = L.geoJSON(feature);
+			gjLayer.addTo(mymap);
+
+            //display for longitude and latitude
+            var popup = L.popup();
+            function onMapClick(e) {
+                alert("Lat, Lon : " + e.latlng.lat + ", " + e.latlng.lng)
+            popup
+                .setLatLng(e.latlng)
+                
+                .setContent(e.latlng.toString())
+                .openOn(mymap);
+                
+            }
+            mymap.on('click', onMapClick);
+
+            //tile Layer map externally imported
+            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+                maxZoom: 18,
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+                    '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                    'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                id: 'mapbox/streets-v11'
+            }).addTo(mymap);
+			
+            //    Distanz zwischen den beiden Knoten Anfrage
+			$('form.ajax').on('submit',function(event){
+                event.preventDefault(); // verhindert den reload der Seite
+                console.log($(this).serialize()); // was an den server geschickt wird
+                // Formular per AJAX senden
+                $.ajax({
+                    type: 'GET',
+                    url: $(this).prop('action'),
+                    data: $(this).serialize(),
+                    dataType: 'json',
+                    success: function(data){
+                        //var distance = Object.values(data)[0];
+						var distance = data['distance'];
+						var path = data['path'];
+                        console.log(distance);
+                        document.getElementById("display").innerHTML = distance;
+						
+						gjLayer.remove();
+						gjLayer = L.geoJSON(path);
+						gjLayer.addTo(mymap);
+                    }
+                }); 
+                return false;
+
+            });
+
+            //Naechster-Knoten-Anfrage
+            $('form.ajax2').on('submit',function(event){
+                event.preventDefault();
+                console.log($(this).serialize());
+                $.ajax({
+                    type: 'GET',
+                    url: $(this).prop('action'),
+                    data: $(this).serialize(),
+                    dataType: 'json',
+                    success: function(data){
+                        var distance = Object.values(data)[0];
+                        document.getElementById("displayNeighbour").innerHTML = distance;
+                        var latitude = Object.values(data)[1];
+                        document.getElementById("displayLatitude").innerHTML = latitude;
+                        var longitude = Object.values(data)[2];
+                        document.getElementById("displayLongitude").innerHTML = longitude;
+                    }
+                });
+                return false;
+            });
+
+        </script>
+    </body>
+</html> 
+
