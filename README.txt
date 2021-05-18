@@ -4,7 +4,6 @@
  * Hoai Nam Trinh 
 
 Note: 
-- Checkout branch "webserver"
 
 - Run the build script either as "bash build.sh"
 			or as "./build.sh"
