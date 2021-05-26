@@ -37,3 +37,6 @@ After running the build file, type "localhost:8080" in your browser to open the 
 	4: "test the Quadtree implementation for nearest neighbor search"
 		//Testet für 100 zufällige Koordinaten innerhalb der axis-aligned bounding box des geladenen Graphen die Quadtree implementierung um den nächsten Knoten zur
 		//zufällig generierten Koordinate zu finden. Zusätzlich zur Korrektheit wird ausgegeben, wie lange die iterative Methode und die Quadtree Methode für die Suchanfrage gebraucht hat.
+
+
+![Screenshot 1](/screenshots/screenshot1.png)
